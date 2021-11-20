@@ -1,95 +1,112 @@
-// import express from "express";
-// import pkg from "body-parser";
-// import db from "./download_api";
+const express = require('express')
+const { MongoClient } = require('mongodb')
+require('dotenv').config()
 
-const express = require("express");
-const json = require("body-parser");
-const initialize = require("./download_api");
-const { request } = require("express");
-require("dotenv").config();
-const server = express();
-// parse JSON (application/json content-type)
-server.use(json());
+const PORT = process.env.PORT || 4000
+const MONGO_URL = process.env.MONGO_URL
+const DB_NAME = process.env.DB_NAME
+const COLLECTION_NAME = process.env.COLLECTION_NAME
 
-const port = process.env.PORT||4000;
+const server = express()
+const client = new MongoClient(MONGO_URL)
 
-// << db setup >>
-const dbName = "jscrates";
-const collectionName = "packages";
+const app = async () => {
+  try {
+    const dbClient = await client.connect()
+    const db = dbClient.db(DB_NAME).collection(COLLECTION_NAME)
 
-// << db CRUD routes >>
-server.get("/pkg/:package/:version?", async (_request, response) => {
-  // dbCollection.find().toArray((error, result) => {
-  //     if (error) throw error;
-  //     response.json(result);
-  // });
-  // << db init >>
-  // successCallback
-  const packageName = _request.params.package;
-  const packageVersion = _request.params.version;
-  if (!packageName) {
-    return response.status(400).json({
-      message: "Package Name Required",
-    });
-  }
-  initialize(
-    dbName,
-    collectionName,
-    function (dbCollection) {
-      // get all items
-      if (packageVersion) {
-        // dbCollection.find({name:packageName,'versions.version':{$eq:packageVersion}}).toArray(function(err, result) {
-        //     if (err) throw err;
-        //       console.log(result);
-        //       return response.json(result);
-        // });
-        const dbrand = dbCollection
-          .aggregate([
-            {
-              $match: {
-                name: packageName,
-              },
+    server.use(express.json())
+    server.use(express.urlencoded({ extended: false }))
+
+    server.get('/', (_, res) => {
+      return res.status(200).json({ message: 'Welcome to JSCrates! 📦' })
+    })
+
+    server.get('/pkg/:package/:version?', async (req, res) => {
+      const { package, version } = req.params
+
+      if (version) {
+        db.aggregate([
+          {
+            $match: {
+              name: package,
             },
-            {
-              $project: {
-                versions: {
-                  $filter: {
-                    input: "$versions",
-                    as: "version",
-                    cond: { $eq: ["$$version.version", packageVersion] },
-                  },
+          },
+          {
+            $project: {
+              name: '$name',
+              version: {
+                $filter: {
+                  input: '$versions',
+                  as: 'version',
+                  cond: { $eq: ['$$version.version', version] },
                 },
               },
             },
-          ])
-          .toArray(function (err, result) {
-            if (err) throw err;
-            console.log(result);
-            return response.json(result);
-          });
-      } else {
-        dbCollection
-          .find({ name: packageName })
-          .toArray(function (err, result) {
-            if (err) throw err;
-            console.log(result);
-            const { versions, ...pkgmeta } = result[0];
-            return response.json({ ...pkgmeta, version: versions[0] });
-          });
-      }
+          },
+        ]).toArray((err, result) => {
+          if (err) {
+            console.error(err)
+            return res.status(500).json({ message: 'Something went wrong' })
+          }
 
-      // failureCallback
-    },
-    function (err) {
-      throw err;
-    }
-  );
-  // dbCollection.findOne({ id: itemId }, (error, result) => {
-  //     if (error) throw error;
-  //     // return item
-  //     response.json(result);
-  // });
-});
-server.listen(port, () => {
-  console.log(`Listening at ${port}`);
-});
+          const { _id, version, ...pkgMeta } = result[0]
+
+          if (!version?.length) {
+            return res.status(400).json({
+              status: 400,
+              message: `Error: Unable to find ${package} with the specified version`,
+            })
+          }
+
+          return res.status(200).json({ ...pkgMeta, dist: version[0] })
+        })
+      } else {
+        db.find({ name: package }).toArray((err, result) => {
+          if (err) {
+            console.error(err)
+            return res.status(500).json({ message: 'Something went wrong' })
+          }
+
+          if (!result?.length) {
+            return res.status(400).json({
+              status: 400,
+              message: `Error: Unable to find package ${package}`,
+            })
+          }
+
+          const { _id, versions, ...pkgmeta } = result[0]
+          return res.json({ ...pkgmeta, dist: versions[0] })
+        })
+      }
+    })
+
+    server.listen(PORT, () => {
+      console.info(`Server listening for requests on port ${PORT}`)
+    })
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+app().catch(console.dir)
+
+// Close the database connection after process exits.
+// https://stackoverflow.com/a/62294908/7469926
+
+// const cleanUp = (eventType) => {
+//   client.close(() => {
+//     console.info('Database connection closed!')
+//   })
+// }
+
+// ;[
+//   `exit`,
+//   `SIGINT`,
+//   `SIGUSR1`,
+//   `SIGUSR2`,
+//   `uncaughtException`,
+//   `SIGTERM`,
+// ].forEach((eventType) => {
+//   process.on(eventType, cleanUp.bind(null, eventType))
+// })
