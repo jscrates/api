@@ -6,12 +6,12 @@ const express = require("express");
 const json = require("body-parser");
 const initialize = require("./download_api");
 const { request } = require("express");
-
+require("dotenv").config();
 const server = express();
 // parse JSON (application/json content-type)
 server.use(json());
 
-const port = 4000;
+const port = process.env.PORT||4000;
 
 // << db setup >>
 const dbName = "jscrates";
