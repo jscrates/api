@@ -1,26 +1,25 @@
 {
-  "dependencies": {
-    "body-parser": "^1.19.0",
-    "dotenv": "^10.0.0",
-    "express": "^4.17.1",
-    "mongodb": "^4.2.0",
-    "mongoose": "^6.0.13",
-    "update": "^0.7.4"
-  },
-  "name": "major-proj",
+  "name": "@jscrates/api",
   "version": "1.0.0",
-  "main": "download_api.js",
+  "author": "Team JSCrates",
+  "description": "Server for handling requests from JSCrates clients.",
+  "private": true,
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "mongodb": "^4.2.0"
+  },
   "devDependencies": {
-    "@types/body-parser": "^1.19.2",
-    "@types/express": "^4.17.13",
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.15",
+    "prettier": "^2.4.1"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false
   }
 }
