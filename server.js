@@ -1,12 +1,22 @@
 const express = require('express')
+const Multer = require('multer')
 const prisma = require('./source/database')
-const retrievePackage = require('./source/controllers/retrieve-package')
 
 require('dotenv').config()
 
 const PORT = process.env.PORT || 4000
 
 const server = express()
+const upload = Multer({
+  storage: Multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'pkgs/')
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.originalname)
+    },
+  }),
+})
 
 const app = async function () {
   try {
@@ -15,11 +25,23 @@ const app = async function () {
     server.use(express.json())
     server.use(express.urlencoded({ extended: false }))
 
-    server.get('/', function (_, res) {
-      return res.status(200).json({ message: 'Welcome to JSCrates! 📦' })
-    })
+    server.get('/', require('./source/controllers/welcome'))
 
-    server.get('/pkg/:package/:version?', retrievePackage)
+    server.get(
+      '/pkg/:package/:version?',
+      require('./source/controllers/package/retrieve')
+    )
+
+    server.post(
+      '/pkg/publish/tar',
+      upload.single('package'),
+      require('./source/controllers/package/publish')
+    )
+
+    server.post(
+      '/pkg/publish/metadata',
+      require('./source/controllers/package/publish')
+    )
 
     // handle endpoint-not-found endpoints
     server.use('*', (_, res) => {
@@ -41,23 +63,3 @@ app()
   .finally(async function () {
     await prisma.$disconnect()
   })
-
-// Close the database connection after process exits.
-// https://stackoverflow.com/a/62294908/7469926
-
-// const cleanUp = (eventType) => {
-//   client.close(() => {
-//     console.info('Database connection closed!')
-//   })
-// }
-
-// ;[
-//   `exit`,
-//   `SIGINT`,
-//   `SIGUSR1`,
-//   `SIGUSR2`,
-//   `uncaughtException`,
-//   `SIGTERM`,
-// ].forEach((eventType) => {
-//   process.on(eventType, cleanUp.bind(null, eventType))
-// })
