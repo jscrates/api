@@ -1,5 +1,7 @@
 const { Router } = require('express')
 
+const processPackage = require('../middleware/process-package')
+
 const packageRouter = Router()
 
 /**
@@ -23,10 +25,10 @@ packageRouter.get(
  * TODO
  * Publishes bundled package to the repository.
  */
-// server.post(
-//   '/pkg/publish/tar',
-//   upload.single('package'),
-//   require('./source/controllers/package/publish/tar')
-// )
+packageRouter.post(
+  '/publish/packed',
+  processPackage.single('packageBundle'),
+  require('../controllers/package/publish/packed')
+)
 
 module.exports = packageRouter
