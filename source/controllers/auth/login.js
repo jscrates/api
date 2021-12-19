@@ -1,6 +1,8 @@
 const axios = require('axios').default
 const { isAxiosError } = require('axios').default
 
+const messages = require('../../lib/messages')
+
 module.exports = async function loginController(req, res) {
   try {
     const { email, password } = req.body
@@ -8,7 +10,7 @@ module.exports = async function loginController(req, res) {
     if (!email || !password) {
       return res.status(400).json({
         status: 400,
-        error: '`username` & `password` are required to proceed.',
+        error: messages.MISSING_CREDENTIALS,
       })
     }
 
@@ -19,7 +21,9 @@ module.exports = async function loginController(req, res) {
 
     const { token } = login?.data
 
-    return res.status(200).json({ status: 200, data: { token } })
+    return res
+      .status(200)
+      .json({ status: 200, message: messages.LOGIN_DONE, data: { token } })
   } catch (err) {
     if (isAxiosError(err)) {
       console.log(err.response.data)
@@ -30,7 +34,7 @@ module.exports = async function loginController(req, res) {
 
     return res.status(500).json({
       status: 500,
-      error: 'Oops! Something went wrong. We are investigating the issue.',
+      error: messages.SERVER_ERROR,
     })
   }
 }
