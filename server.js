@@ -1,55 +1,31 @@
 const express = require('express')
-const Multer = require('multer')
-const prisma = require('./source/database')
+// Database
+const database = require('./source/database')
+// Routers
+const authRouter = require('./source/routes/auth')
+const packageRouter = require('./source/routes/package')
+// Controllers
+const notFoundController = require('./source/controllers/not-found')
 
 require('dotenv').config()
 
 const PORT = process.env.PORT || 4000
-
 const server = express()
-const upload = Multer({
-  storage: Multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'pkgs/')
-    },
-    filename: function (req, file, cb) {
-      cb(null, file.originalname)
-    },
-  }),
-})
 
 const app = async function () {
   try {
-    await prisma.$connect()
+    await database.$connect()
 
+    // Middleware
     server.use(express.json())
     server.use(express.urlencoded({ extended: false }))
 
-    server.get('/', require('./source/controllers/welcome'))
+    // Routes
+    server.use('/auth', authRouter)
+    server.use('/pkg', packageRouter)
+    server.use('*', notFoundController)
 
-    server.get(
-      '/pkg/:package/:version?',
-      require('./source/controllers/package/retrieve')
-    )
-
-    server.post(
-      '/pkg/publish/tar',
-      upload.single('package'),
-      require('./source/controllers/package/publish')
-    )
-
-    server.post(
-      '/pkg/publish/metadata',
-      require('./source/controllers/package/publish')
-    )
-
-    // handle endpoint-not-found endpoints
-    server.use('*', (_, res) => {
-      res
-        .status(404)
-        .json({ error: 'You have reached the end of crates bunker!' })
-    })
-
+    // Start listening to requests
     server.listen(PORT, function () {
       console.info(`Server listening for requests on port ${PORT}`)
     })
@@ -61,5 +37,5 @@ const app = async function () {
 app()
   .catch(console.dir)
   .finally(async function () {
-    await prisma.$disconnect()
+    await database.$disconnect()
   })
