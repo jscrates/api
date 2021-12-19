@@ -13,3 +13,9 @@ model packages {
   name     String
   versions Json[]
 }
+
+model users {
+  id       String @id @default(dbgenerated()) @map("_id") @db.ObjectId
+  password String
+  username String
+}
