@@ -1,6 +1,7 @@
 const { Router } = require('express')
 
 const processPackage = require('../middleware/process-package')
+const processPackageMeta = require('../controllers/package/publish/metadata')
 
 const packageRouter = Router()
 
@@ -27,7 +28,8 @@ packageRouter.get(
  */
 packageRouter.post(
   '/publish/packed',
-  processPackage.single('packageBundle'),
+  processPackage,
+  processPackageMeta,
   require('../controllers/package/publish/packed')
 )
 
