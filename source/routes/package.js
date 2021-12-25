@@ -1,36 +1,23 @@
 const { Router } = require('express')
-
+const retrievePackage = require('../controllers/package/retrieve')
 const processPackage = require('../middleware/process-package')
-const processPackageMeta = require('../controllers/package/publish/metadata')
+const processPackageMeta = require('../middleware/process-package-meta')
+const uploadPackageTarball = require('../controllers/package/publish/packed')
+const publishPackageMeta = require('../controllers/package/publish/metadata')
 
 const packageRouter = Router()
 
-/**
- * Retrieve package metadata from the repository.
- */
-packageRouter.get(
-  '/:package/:version?',
-  require('../controllers/package/retrieve')
-)
+//? Retrieve package metadata from the repository.
+packageRouter.get('/:package/:version?', retrievePackage)
 
-/**
- * TODO
- * Publishes package metadata to the database.
- */
-// server.post(
-//   '/pkg/publish/metadata',
-//   require('./source/controllers/package/publish/metadata')
-// )
-
-/**
- * TODO
- * Publishes bundled package to the repository.
- */
+//? Publish provided package to the repository
+// TODO: Add auth middleware
 packageRouter.post(
-  '/publish/packed',
+  '/publish',
   processPackage,
   processPackageMeta,
-  require('../controllers/package/publish/packed')
+  uploadPackageTarball,
+  publishPackageMeta
 )
 
 module.exports = packageRouter

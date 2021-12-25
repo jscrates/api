@@ -3,14 +3,11 @@ const Validator = require('jsonschema').Validator
 
 let jsonSchema
 const schema = new Validator()
-
 const JSON_SCHEMA_URL = process.env.JSON_SCHEMA_URL
 
 async function fetchPackageMetaSchema() {
   try {
-    if (jsonSchema) {
-      return jsonSchema
-    }
+    if (jsonSchema) return jsonSchema
     const { data } = await axios.get(JSON_SCHEMA_URL)
     jsonSchema = data
   } catch (error) {

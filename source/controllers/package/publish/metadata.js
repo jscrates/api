@@ -1,71 +1,54 @@
 const db = require('../../../database')
-const validateSchema = require('../../../lib/validations/package-meta')
 const messages = require('../../../lib/messages')
+const { createJSONResponder } = require('../../../lib/responders')
 
-module.exports = async function processPackageMeta(req, res) {
+module.exports = async function processPackageMeta(req, res, next) {
+  const respond = createJSONResponder(res)
+
   try {
-    const { files } = req
+    const { packageMeta, packageStatus } = res.locals
+    const { name, version, dependencies, author } = packageMeta
+    const { publicURL, isPublished } = packageStatus
 
-    // We do not have the package meta file,
-    // probably the `package-meta.json`
-    if (!files?.packageMeta?.length) {
-      return res
-        .status(400)
-        .json({ status: 400, error: messages.MISSING_CREDENTIALS })
+    if (!isPublished) {
+      return respond(500, { error: messages.SERVER_ERROR })
     }
 
-    // Extract the raw packageMeta file sent by the client
-    const packageMeta = files?.packageMeta[0]
-    // Parse the meta into JSON for validation
-    const jsonParsedMeta = JSON.parse(packageMeta?.buffer?.toString())
+    //? Check if package has already been published.
+    const packageFromDB = await db.packages.findFirst({ where: { name } })
+    const _version = { version, tarball: publicURL }
 
-    // We got an invalid `package-meta.json`
-    if (!(await validateSchema(jsonParsedMeta))) {
-      return res.status(400).json({
-        status: 400,
-        error: messages.ERR_PKG_META_VALIDATION,
+    //? Package already has been published update it with the newer version.
+    if (packageFromDB) {
+      await db.packages.update({
+        where: { id: packageFromDB.id },
+        data: {
+          author,
+          versions: [...packageFromDB.versions, _version],
+        },
+      })
+
+      return respond(200, {
+        message: `The ${version} version of ${name} has been published.`,
       })
     }
 
-    const existingPackage = await db.packages.findFirst({
-      where: {
-        name: jsonParsedMeta?.name,
-      },
+    await db.packages.create({
+      data: { name, author, dependencies, versions: [_version] },
     })
 
-    // The package has never been published
-    //* To be continued
-    if (!existingPackage) {
-    }
-
-    const existingPackageVersions = existingPackage.versions.map(
-      (v) => v?.version
-    )
-
-    if (existingPackageVersions.includes(jsonParsedMeta?.version)) {
-      return res.status(400).json({
-        status: 400,
-        error: `The package \`${jsonParsedMeta?.name}\` with version \`${jsonParsedMeta?.version}\` has already been published.`,
-      })
-    }
-
-    console.log(existingPackage, existingPackageVersions)
-
-    return res.status(200).json({ message: `Package published!` })
+    return respond(200, { message: messages.PACKAGE_UPLOADED })
   } catch (error) {
     console.error(error)
 
-    // There was an error with the JSON.parse()
-    // on the packageMeta file provided.
+    // There was an error while executing JSON.parse() on provided packageMeta file.
     if (error instanceof SyntaxError) {
-      return res.status(400).json({
-        status: 400,
+      return respond(400, {
         error: messages.ERR_PKG_META_PARSING,
       })
     }
 
-    return res.status(500).json({
-      status: 500,
+    return respond(500, {
       error: messages.SERVER_ERROR,
     })
   }

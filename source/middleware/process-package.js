@@ -1,11 +1,10 @@
 const multer = require('multer')
 const path = require('path')
-
 const messages = require('../lib/messages')
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
-// We only allow .tgz files as bundled packages
+//? We only allow tarballs (.tgz) files as packages
 function fileFilter(req, file, callback) {
   const currentFileExt = path.extname(file.originalname)
 
@@ -21,7 +20,7 @@ const processPackageBundle = multer({
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter,
 }).fields([
-  { name: 'packageBundle', maxCount: 1 },
+  { name: 'packageTarball', maxCount: 1 },
   { name: 'packageMeta', maxCount: 1 },
 ])
 

@@ -2,6 +2,7 @@ const messages = {
   NOT_FOUND: 'We have reached the end of (crates) warehouse but found nothing!',
   LOGIN_DONE: 'Login successful',
   SERVER_ERROR: 'Oops! Something went wrong. We are investigating the issue.',
+  PACKAGE_UPDATED: 'Package has been updated.',
   PACKAGE_UPLOADED: 'Package has been uploaded to the repository.',
   PACKAGE_SIZE_EXCEEDED: 'Package size has exceeded the 10MB limit.',
   REGISTRATION_DONE:
