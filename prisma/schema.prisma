@@ -9,9 +9,11 @@ datasource db {
 }
 
 model packages {
-  id       String @id @default(dbgenerated()) @map("_id") @db.ObjectId
-  name     String
-  versions Json[]
+  id           String  @id @default(dbgenerated()) @map("_id") @db.ObjectId
+  name         String
+  versions     Json[]
+  author       String?
+  dependencies Json?
 }
 
 model users {
