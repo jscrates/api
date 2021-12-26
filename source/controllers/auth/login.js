@@ -1,7 +1,7 @@
 const axios = require('axios').default
 const { isAxiosError } = require('axios').default
-
 const messages = require('../../lib/messages')
+const ApplicationConfig = require('../../lib/config')
 
 module.exports = async function loginController(req, res) {
   try {
@@ -14,10 +14,13 @@ module.exports = async function loginController(req, res) {
       })
     }
 
-    const { data: login } = await axios.put(`${process.env.AUTH_API}/login`, {
-      username: email,
-      password,
-    })
+    const { data: login } = await axios.put(
+      `${ApplicationConfig.AUTH_API}/login`,
+      {
+        username: email,
+        password,
+      }
+    )
 
     const { token } = login?.data
 

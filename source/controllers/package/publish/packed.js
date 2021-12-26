@@ -1,8 +1,9 @@
 const { Storage } = require('@google-cloud/storage')
 const messages = require('../../../lib/messages')
 const { createJSONResponder } = require('../../../lib/responders')
+const ApplicationConfig = require('../../../lib/config')
 
-const GC_BUCKET_NAME = process.env.GC_BUCKET_NAME
+const GC_BUCKET_NAME = ApplicationConfig.GC_BUCKET_NAME
 const GC_DIR_PREFIX_DEV = `dev/pkgs`
 const GC_DIR_PREFIX_PROD = `pkgs`
 
@@ -10,10 +11,10 @@ const GC_DIR_PREFIX_PROD = `pkgs`
 //? Explore "Identity Federation".
 // TODO: Find a better alternative.
 const storage = new Storage({
-  projectId: process.env.GC_PROJECT_ID,
+  projectId: ApplicationConfig.GC_PROJECT_ID,
   credentials: {
-    client_email: process.env.GC_CLIENT_EMAIL,
-    private_key: process.env.GC_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    client_email: ApplicationConfig.GC_CLIENT_EMAIL,
+    private_key: ApplicationConfig.GC_PRIVATE_KEY.replace(/\\n/g, '\n'),
   },
 }).bucket(GC_BUCKET_NAME)
 

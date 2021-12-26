@@ -1,4 +1,5 @@
 const express = require('express')
+const ApplicationConfig = require('./source/lib/config')
 // Database
 const database = require('./source/database')
 // Routers
@@ -9,7 +10,6 @@ const notFoundController = require('./source/controllers/not-found')
 
 require('dotenv').config()
 
-const PORT = process.env.PORT || 4000
 const server = express()
 
 const app = async function () {
@@ -26,8 +26,10 @@ const app = async function () {
     server.use('*', notFoundController)
 
     // Start listening to requests
-    server.listen(PORT, function () {
-      console.info(`Server listening for requests on port ${PORT}`)
+    server.listen(ApplicationConfig.PORT, function () {
+      console.info(
+        `Server listening for requests on port ${ApplicationConfig.PORT}`
+      )
     })
   } catch (err) {
     console.error(err)

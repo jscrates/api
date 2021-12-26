@@ -1,9 +1,10 @@
 const axios = require('axios').default
 const Validator = require('jsonschema').Validator
+const ApplicationConfig = require('../config')
 
 let jsonSchema
 const schema = new Validator()
-const JSON_SCHEMA_URL = process.env.JSON_SCHEMA_URL
+const JSON_SCHEMA_URL = ApplicationConfig.JSON_SCHEMA_URL
 
 async function fetchPackageMetaSchema() {
   try {

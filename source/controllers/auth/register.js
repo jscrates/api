@@ -1,7 +1,7 @@
 const axios = require('axios').default
 const { isAxiosError } = require('axios').default
-
 const messages = require('../../lib/messages')
+const ApplicationConfig = require('../../lib/config')
 
 module.exports = async function loginController(req, res) {
   try {
@@ -14,7 +14,7 @@ module.exports = async function loginController(req, res) {
       })
     }
 
-    await axios.post(`${process.env.AUTH_API}/register`, {
+    await axios.post(`${ApplicationConfig.AUTH_API}/register`, {
       username: email,
       password,
     })
