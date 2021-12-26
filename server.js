@@ -1,35 +1,35 @@
 const express = require('express')
-const prisma = require('./source/database')
-const retrievePackage = require('./source/controllers/retrieve-package')
+const ApplicationConfig = require('./source/lib/config')
+// Database
+const database = require('./source/database')
+// Routers
+const authRouter = require('./source/routes/auth')
+const packageRouter = require('./source/routes/package')
+// Controllers
+const notFoundController = require('./source/controllers/not-found')
 
 require('dotenv').config()
-
-const PORT = process.env.PORT || 4000
 
 const server = express()
 
 const app = async function () {
   try {
-    await prisma.$connect()
+    await database.$connect()
 
+    // Middleware
     server.use(express.json())
     server.use(express.urlencoded({ extended: false }))
 
-    server.get('/', function (_, res) {
-      return res.status(200).json({ message: 'Welcome to JSCrates! 📦' })
-    })
+    // Routes
+    server.use('/auth', authRouter)
+    server.use('/pkg', packageRouter)
+    server.use('*', notFoundController)
 
-    server.get('/pkg/:package/:version?', retrievePackage)
-
-    // handle endpoint-not-found endpoints
-    server.use('*', (_, res) => {
-      res
-        .status(404)
-        .json({ error: 'You have reached the end of crates bunker!' })
-    })
-
-    server.listen(PORT, function () {
-      console.info(`Server listening for requests on port ${PORT}`)
+    // Start listening to requests
+    server.listen(ApplicationConfig.PORT, function () {
+      console.info(
+        `Server listening for requests on port ${ApplicationConfig.PORT}`
+      )
     })
   } catch (err) {
     console.error(err)
@@ -39,25 +39,5 @@ const app = async function () {
 app()
   .catch(console.dir)
   .finally(async function () {
-    await prisma.$disconnect()
+    await database.$disconnect()
   })
-
-// Close the database connection after process exits.
-// https://stackoverflow.com/a/62294908/7469926
-
-// const cleanUp = (eventType) => {
-//   client.close(() => {
-//     console.info('Database connection closed!')
-//   })
-// }
-
-// ;[
-//   `exit`,
-//   `SIGINT`,
-//   `SIGUSR1`,
-//   `SIGUSR2`,
-//   `uncaughtException`,
-//   `SIGTERM`,
-// ].forEach((eventType) => {
-//   process.on(eventType, cleanUp.bind(null, eventType))
-// })

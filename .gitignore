@@ -1,4 +1,5 @@
 .env
+.pkgs
 node_modules
 react_api.txt
 Database meta data.jpg
