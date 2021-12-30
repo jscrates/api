@@ -1,20 +1,19 @@
 const express = require('express')
 const ApplicationConfig = require('./source/lib/config')
 // Database
-const database = require('./source/database')
+const Database = require('./source/database')
 // Routers
 const authRouter = require('./source/routes/auth')
 const packageRouter = require('./source/routes/package')
 // Controllers
 const notFoundController = require('./source/controllers/not-found')
 
-require('dotenv').config()
-
+const mongoose = new Database()
 const server = express()
 
 const app = async function () {
   try {
-    await database.$connect()
+    await mongoose.connect()
 
     // Middleware
     server.use(express.json())
@@ -36,8 +35,4 @@ const app = async function () {
   }
 }
 
-app()
-  .catch(console.dir)
-  .finally(async function () {
-    await database.$disconnect()
-  })
+app().catch(console.dir)

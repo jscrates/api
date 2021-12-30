@@ -1,4 +1,4 @@
-const db = require('../../../database')
+const Package = require('../../../models/packages')
 const messages = require('../../../lib/messages')
 const { createJSONResponder } = require('../../../lib/responders')
 
@@ -15,27 +15,33 @@ module.exports = async function processPackageMeta(req, res, next) {
     }
 
     //? Check if package has already been published.
-    const packageFromDB = await db.packages.findFirst({ where: { name } })
+    const packageFromDB = await Package.findOne({ name })
     const _version = { version, tarball: publicURL }
 
     //? Package already has been published update it with the newer version.
     if (packageFromDB) {
-      await db.packages.update({
-        where: { id: packageFromDB.id },
-        data: {
-          author,
-          versions: [...packageFromDB.versions, _version],
-        },
-      })
+      await Package.findOneAndUpdate(
+        { id: packageFromDB.id },
+        {
+          $push: {
+            versions: _version,
+          },
+        }
+      )
 
       return respond(200, {
         message: `The ${version} version of ${name} has been published.`,
       })
     }
 
-    await db.packages.create({
-      data: { name, author, dependencies, versions: [_version] },
+    const newPackage = new Package({
+      name,
+      author,
+      dependencies,
+      versions: [_version],
     })
+
+    await newPackage.save()
 
     return respond(200, { message: messages.PACKAGE_UPLOADED })
   } catch (error) {

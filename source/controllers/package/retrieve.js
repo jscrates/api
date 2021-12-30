@@ -1,4 +1,4 @@
-const db = require('../../database')
+const Package = require('../../models/packages')
 
 async function retrievePackage(req, res) {
   try {
@@ -6,10 +6,8 @@ async function retrievePackage(req, res) {
     const { package, version } = req.params
 
     // Query database for the specified package name
-    const packageMeta = await db.packages.findFirst({
-      where: {
-        name: { equals: package },
-      },
+    const packageMeta = await Package.findOne({
+      name: package,
     })
 
     // If response ends up null, we don't have such package
