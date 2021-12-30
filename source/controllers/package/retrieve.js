@@ -66,7 +66,6 @@ function removeFalsyValues(source) {
 function normalizePackageName(name) {
   if (typeof name !== 'string') return
 
-  // console.log((name.match(/\@/g) || []).length)
   if (name.startsWith('@') && (name.match(/\@/g) || []).length === 1) {
     return [name]
   }
@@ -88,13 +87,21 @@ async function retrievePackage(req, res) {
       })
     }
 
-    const _queriedPackages = [...new Set(packages)]
+    console.group('Getting packages')
+    console.time('Normalizing')
+
+    const _deDupedPackages = [...new Set(packages)]
+    const _queriedPackages = _deDupedPackages
       .map(normalizePackageName)
-      .map((package) => ({
+      .map((package, idx) => ({
         name: package[0],
         queriedVersion: package[1],
-        originalQuery: package,
+        originalQuery: _deDupedPackages[idx],
       }))
+
+    console.timeEnd('Normalizing')
+
+    console.time('Querying')
 
     const _resolvedQueriedPackages = await Promise.all(
       _queriedPackages.map(async (package) => {
@@ -107,7 +114,7 @@ async function retrievePackage(req, res) {
         const _aggregationResult = await Package.aggregate([
           {
             $match: {
-              name: name,
+              name,
             },
           },
           {
@@ -162,6 +169,10 @@ async function retrievePackage(req, res) {
       })
     )
 
+    console.timeEnd('Querying')
+
+    console.time('Building response')
+
     const _queriedPackageErrors = []
     const _queriedPackagesFound = []
 
@@ -183,6 +194,9 @@ async function retrievePackage(req, res) {
         errors: _queriedPackageErrors,
       })
     }
+
+    console.timeEnd('Building response')
+    console.groupEnd('Getting packages')
 
     return respond(200, {
       data: _queriedPackagesFound,
