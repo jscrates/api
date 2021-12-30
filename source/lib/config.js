@@ -1,7 +1,9 @@
 const dotenv = require('dotenv')
 
 if ('production' !== process.env.NODE_ENV) {
-  dotenv.config()
+  dotenv.config({
+    path: '.env.development',
+  })
 }
 
 class ApplicationConfig {
