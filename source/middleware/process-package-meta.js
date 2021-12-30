@@ -1,4 +1,4 @@
-const db = require('../database')
+const Packages = require('../models/packages')
 const messages = require('../lib/messages')
 const { createJSONResponder } = require('../lib/responders')
 const validateSchema = require('../lib/validations/package-meta')
@@ -29,10 +29,8 @@ module.exports = async function processPackageMeta(req, res, next) {
       })
     }
 
-    const existingPackage = await db.packages.findFirst({
-      where: {
-        name: jsonParsedMeta?.name,
-      },
+    const existingPackage = await Packages.findOne({
+      name: jsonParsedMeta?.name,
     })
 
     //? The package has never been published, we can safely proceed to
