@@ -74,12 +74,6 @@ module.exports = async function publishPackage(req, res, next) {
       }
 
       return next()
-      // return respond(200, {
-      //   message: messages.PACKAGE_UPLOADED,
-      //   data: {
-      //     publicPackageURL,
-      //   },
-      // })
     })
 
     //? End the stream by writing the file buffer on the repository.

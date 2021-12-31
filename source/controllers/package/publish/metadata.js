@@ -23,6 +23,7 @@ module.exports = async function processPackageMeta(req, res, next) {
       await Package.findOneAndUpdate(
         { id: packageFromDB.id },
         {
+          latest: version,
           $push: {
             versions: _version,
           },
@@ -39,6 +40,7 @@ module.exports = async function processPackageMeta(req, res, next) {
       author,
       dependencies,
       versions: [_version],
+      latest: version,
     })
 
     await newPackage.save()

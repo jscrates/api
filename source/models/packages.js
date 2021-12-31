@@ -23,6 +23,7 @@ const packageSchema = new mongoose.Schema({
       },
     },
   ],
+  latest: Schema.Types.String,
   dependencies: Schema.Types.Mixed,
 })
 

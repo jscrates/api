@@ -8,7 +8,7 @@ const publishPackageMeta = require('../controllers/package/publish/metadata')
 const packageRouter = Router()
 
 //? Retrieve package metadata from the repository.
-packageRouter.get('/:package/:version?', retrievePackage)
+packageRouter.put('/', retrievePackage)
 
 //? Publish provided package to the repository
 // TODO: Add auth middleware
