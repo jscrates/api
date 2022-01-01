@@ -4,7 +4,7 @@ const Package = require('../../models/packages')
 
 // Cache to hold packages that were resolved successfully during database query.
 // This prevents couple of database trips unless the server was restarted.
-const foundPackagesCache = new Map()
+// const foundPackagesCache = new Map()
 
 // We allow packages to be queried using the following syntaxes
 //
@@ -100,16 +100,11 @@ async function retrievePackage(req, res) {
       }))
 
     console.timeEnd('Normalizing')
-
     console.time('Querying')
 
     const _resolvedQueriedPackages = await Promise.all(
       _queriedPackages.map(async (package) => {
-        const { name, queriedVersion, originalQuery } = package
-
-        if (foundPackagesCache.has(originalQuery)) {
-          return Promise.resolve(foundPackagesCache.get(name))
-        }
+        const { name, queriedVersion } = package
 
         const _aggregationResult = await Package.aggregate([
           {
@@ -164,7 +159,6 @@ async function retrievePackage(req, res) {
           dist: _aggregationResult[0].version[0],
         }
 
-        foundPackagesCache.set(originalQuery, response)
         return response
       })
     )
