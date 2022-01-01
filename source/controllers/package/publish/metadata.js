@@ -20,15 +20,12 @@ module.exports = async function processPackageMeta(req, res, next) {
 
     //? Package already has been published update it with the newer version.
     if (packageFromDB) {
-      await Package.findOneAndUpdate(
-        { id: packageFromDB._id },
-        {
-          latest: version,
-          $push: {
-            versions: _version,
-          },
-        }
-      )
+      await Package.findByIdAndUpdate(packageFromDB._id, {
+        latest: version,
+        $push: {
+          versions: _version,
+        },
+      })
 
       return respond(200, {
         message: `The ${version} version of ${name} has been published.`,
