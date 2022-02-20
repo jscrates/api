@@ -5,55 +5,40 @@ const DependencyResolver = require('../../services/dependency.service')
 // Cache to hold packages that were resolved
 // successfully during database query. This prevents
 // couple of database trips unless the server was restarted.
-const foundPackagesCache = new Map()
-const resolver = new DependencyResolver()
+// const foundPackagesCache = new Map()
+// const resolver = new DependencyResolver()
 
-class PackageModel {
-  constructor(name, queriedVersion, originalQuery) {
-    this.name = name
-    this.queriedVersion = queriedVersion
-    this.originalQuery = originalQuery
-  }
+const recursiveResolvePkg = async (package, resolved = [], unresolved = []) => {
+  unresolved.push(package)
+
+  Object.entries(package.dependencies).map(async (dep) => {
+    const hasAlreadyBeenResolved = resolved.filter(
+      (pkg) => pkg.name === dep[0]
+    ).length
+
+    // When the dependency is not resolved yet.
+    if (!hasAlreadyBeenResolved) {
+      const _resolvedDep = await queryPackageByVersionOrLatest({
+        name: dep[0],
+        queriedVersion: dep[1],
+      })
+      await recursiveResolvePkg(_resolvedDep, resolved, unresolved)
+    }
+  })
+
+  resolved.push(package)
+  unresolved.splice(
+    unresolved.findIndex((pkg) => pkg.name === package.name),
+    1
+  )
 }
 
 const resolvePackage = async (package) => {
   const log = createLogger('resolvePackage')
-  const { name, queriedVersion = 'latest' } = package
+  // const { name, queriedVersion = 'latest' } = package
 
   try {
-    const cacheKey = `${name}@${queriedVersion}`
-
-    resolver.add(cacheKey)
-
-    if (foundPackagesCache.has(cacheKey)) {
-      log(`${cacheKey} found in cache.`)
-      return Promise.resolve(foundPackagesCache.get(cacheKey))
-    }
-
-    const resolvedPackage = await queryPackageByVersionOrLatest(package)
-
-    // if (resolvedPackage.dependencies) {
-    //   const resolveDeps = Object.entries(resolvedPackage.dependencies).map(
-    //     async (dep) => {
-    //       return await queryPackageByVersionOrLatest(
-    //         new PackageModel(dep[0], dep[1], dep.join('@'))
-    //       )
-    //     }
-    //   )
-
-    //   const resolvedDeps = await Promise.all(resolveDeps)
-
-    //   console.log({ ...resolvedPackage, deps: resolvedDeps })
-    // }
-
-    // Only packages resolved successfully can be safely
-    // added to cache due to the fact that they won't be
-    // changing unless a new version is published.
-    if (resolvedPackage.isFound) {
-      foundPackagesCache.set(cacheKey, resolvedPackage)
-    }
-
-    return resolvedPackage
+    return await queryPackageByVersionOrLatest(package)
   } catch (error) {
     log(error)
     return error

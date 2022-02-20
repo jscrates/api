@@ -150,7 +150,7 @@ function main() {
   resolver.setDependency('@jscrates/pig-latin', '@jscrates/math')
   resolver.setDependency('@jscrates/math', '@jscrates/math-primitives')
 
-  console.log(resolver.resolve('@jscrates/pig-latin'))
+  console.log(resolver.resolve('@jscrates/binary-search'))
 }
 
 module.exports = DependencyResolver
