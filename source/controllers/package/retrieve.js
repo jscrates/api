@@ -1,6 +1,6 @@
 const messages = require('../../lib/messages')
 const { createJSONResponder } = require('../../lib/responders')
-const Package = require('../../models/packages')
+const resolvePackage = require('../../repositories/package/resolve-package')
 
 // Cache to hold packages that were resolved successfully during database query.
 // This prevents couple of database trips unless the server was restarted.
@@ -103,68 +103,10 @@ async function retrievePackage(req, res) {
     console.time('Querying')
 
     const _resolvedQueriedPackages = await Promise.all(
-      _queriedPackages.map(async (package) => {
-        const { name, queriedVersion } = package
-
-        const _aggregationResult = await Package.aggregate([
-          {
-            $match: {
-              name,
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              name: 1,
-              latest: 1,
-              version: {
-                $filter: {
-                  input: '$versions',
-                  as: 'version',
-                  cond: {
-                    $eq: ['$$version.version', queriedVersion || '$latest'],
-                  },
-                },
-              },
-            },
-          },
-        ])
-
-        if (!_aggregationResult?.length) {
-          const response = {
-            name,
-            queriedVersion,
-            isFound: false,
-            error: `The package \`${name}\` does not exist.`,
-          }
-
-          return response
-        }
-
-        if (!_aggregationResult[0]?.version?.length) {
-          const response = {
-            name,
-            queriedVersion,
-            isFound: false,
-            error: `The package \`${name}\` with version \`${queriedVersion}\` does not exist.`,
-          }
-
-          return response
-        }
-
-        const response = {
-          name,
-          queriedVersion,
-          isFound: true,
-          dist: _aggregationResult[0].version[0],
-        }
-
-        return response
-      })
+      _queriedPackages.map(resolvePackage)
     )
 
     console.timeEnd('Querying')
-
     console.time('Building response')
 
     const _queriedPackageErrors = []
@@ -180,6 +122,7 @@ async function retrievePackage(req, res) {
       return _queriedPackagesFound.push({
         name,
         dist: package?.dist,
+        dependencies: package?.dependencies,
       })
     })
 
