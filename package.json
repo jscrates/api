@@ -18,7 +18,7 @@
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
     "jsonschema": "^1.4.0",
-    "mongoose": "^6.2.2",
+    "mongoose": "^6.2.8",
     "multer": "^1.4.4"
   },
   "devDependencies": {
